@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { LoadingSkeleton, EmptyState, ErrorState } from '@/components/ui/loading-states'
 import { Pill, AlertTriangle, CheckCircle, Clock, User, Stethoscope } from 'lucide-react'
 import { toast } from 'sonner'
+import { CheckoutPaymentFlow } from '@/components/payments/CheckoutFlow'
 
 interface Prescription {
   id: string
@@ -222,6 +223,19 @@ export default function PharmacistInbox() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Checkout & Payment */}
+      <div className="max-w-sm">
+        <CheckoutPaymentFlow
+          patientId="patient-001"
+          practitionerId="pharmacist-001"
+          showConversion={true}
+          defaultAmount="500"
+          onPaymentComplete={(resp) => {
+            if (resp.success) toast.success('Prescription payment received')
+          }}
+        />
+      </div>
     </div>
   )
 }

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Search, AlertTriangle, Shield, Lock, User, ClipboardList, Stethoscope } from 'lucide-react'
 import { toast } from 'sonner'
+import { CheckoutPaymentFlow } from '@/components/payments/CheckoutFlow'
 
 interface ICD10Code {
   code: string
@@ -308,6 +309,14 @@ export default function SOAPEditorPage() {
               </div>
             </CardContent>
           </Card>
+
+          <CheckoutPaymentFlow
+            patientId="patient-001"
+            practitionerId="doctor-001"
+            appointmentId={appointmentId}
+            showConversion={true}
+            defaultAmount="1500"
+          />
 
           <Button variant="outline" className="w-full" onClick={() => navigate('/doctor/dashboard')}>
             Back to Dashboard
