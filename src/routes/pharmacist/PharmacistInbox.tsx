@@ -6,9 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { LoadingSkeleton, EmptyState, ErrorState } from '@/components/ui/loading-states'
-import { Pill, AlertTriangle, CheckCircle, Clock, User, Stethoscope } from 'lucide-react'
+import { Pill, AlertTriangle, CheckCircle, Clock, User, Stethoscope, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import { CheckoutPaymentFlow } from '@/components/payments/CheckoutFlow'
+import { pharmacyDispatch, PHARMACY_NAMES } from '@/lib/integrations'
+import type { PharmacyPartner } from '@/lib/integrations'
 
 interface Prescription {
   id: string
@@ -67,6 +69,8 @@ export default function PharmacistInbox() {
   const [selectedRx, setSelectedRx] = useState<Prescription | null>(null)
   const [showInteraction, setShowInteraction] = useState(false)
   const [loading] = useState(false)
+  const [dispatchingRx, setDispatchingRx] = useState<string | null>(null)
+  const [dispatchPartner, setDispatchPartner] = useState<PharmacyPartner>('dvago')
 
   const handleDispense = (rx: Prescription) => {
     if (rx.interactions.length > 0) {
@@ -88,6 +92,33 @@ export default function PharmacistInbox() {
       toast.success('Interaction overridden — prescription dispensed')
       setShowInteraction(false)
       setSelectedRx(null)
+    }
+  }
+
+  const handleSendToPharmacy = async (rx: Prescription) => {
+    setDispatchingRx(rx.id)
+    const response = await pharmacyDispatch.placeOrder(dispatchPartner, {
+      id: `PH-${Date.now()}`,
+      pharmacyPartner: dispatchPartner,
+      prescriptionId: rx.id,
+      patientId: 'patient-001', patientName: rx.patient,
+      patientPhone: '0300-1234567', patientAddress: '12-A, Block 6',
+      patientCity: 'Karachi',
+      doctorId: 'doctor-001', doctorName: rx.doctor,
+      deliveryType: 'delivery', paymentMethod: 'cod',
+      items: [{
+        medicationCode: rx.id, medicationName: rx.medication,
+        dosage: rx.dosage, quantity: 1, unit: 'box',
+        instructions: rx.frequency, pricePerUnit: 150,
+        isControlled: false,
+      }],
+    })
+    setDispatchingRx(null)
+    if (response.success) {
+      toast.success(`Dispatched via ${PHARMACY_NAMES[dispatchPartner]}: ${response.trackingUrl ? 'Track at ' + response.trackingUrl : response.message}`)
+      setPrescriptions(prev => prev.map(p => p.id === rx.id ? { ...p, status: 'dispensed' as const } : p))
+    } else {
+      toast.error(response.message)
     }
   }
 
@@ -171,11 +202,27 @@ export default function PharmacistInbox() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {rx.status === 'pending' && (
-                        <Button size="sm" variant="outline" onClick={() => handleDispense(rx)}>
-                          Dispense
-                        </Button>
-                      )}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex gap-1">
+                          {(['dvago', 'dawaai', 'tabiyat'] as PharmacyPartner[]).map(p => (
+                            <Button key={p} size="sm" variant={dispatchPartner === p ? 'default' : 'ghost'}
+                              className="text-xs px-1.5 h-6" onClick={() => setDispatchPartner(p)}>
+                              {p === 'dvago' ? 'DV' : p === 'dawaai' ? 'DW' : 'TB'}
+                            </Button>
+                          ))}
+                        </div>
+                        {rx.status === 'pending' && (
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="outline" onClick={() => handleDispense(rx)}>
+                              Dispense
+                            </Button>
+                            <Button size="sm" variant="accent" onClick={() => handleSendToPharmacy(rx)}
+                              disabled={dispatchingRx === rx.id}>
+                              {dispatchingRx === rx.id ? '...' : <Truck className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

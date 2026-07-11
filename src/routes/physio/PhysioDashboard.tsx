@@ -7,7 +7,7 @@ import { LoadingSkeleton, EmptyState } from '@/components/ui/loading-states'
 import {
   Dumbbell, Camera, AlertTriangle, Target, ChevronUp, ChevronDown,
   Activity, User, RotateCcw, Crosshair, CheckCircle2, MousePointerClick,
-  GripHorizontal, Ruler
+  Ruler
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -42,7 +42,7 @@ function calculateAngle(p1: CanvasPoint, center: CanvasPoint, p2: CanvasPoint): 
 }
 
 // ─── SVG Arc path helper ────────────────────────────────────────────────────
-function arcPath(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
+function _arcPath(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
   const start = {
     x: cx + r * Math.cos((startAngle * Math.PI) / 180),
     y: cy + r * Math.sin((startAngle * Math.PI) / 180),
@@ -96,7 +96,7 @@ function JointAngleCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [points, setPoints] = useState<(CanvasPoint)[]>([null, null, null])
   const [calculatedAngle, setCalculatedAngle] = useState(0)
-  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
+  const [_hoveredPoint, _setHoveredPoint] = useState<number | null>(null)
 
   const jointLabels = ['Joint Center', 'Proximal Ref', 'Distal Ref']
   const jointColors = ['#059669', '#6366f1', '#dc2626']
@@ -110,7 +110,7 @@ function JointAngleCanvas({
     const w = canvas.width
     const h = canvas.height
     const cx = w / 2
-    const cy = h / 2
+    const _cy = h / 2
 
     // Clear
     ctx.clearRect(0, 0, w, h)

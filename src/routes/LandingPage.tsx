@@ -56,12 +56,12 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="py-20 lg:py-28">
         <div className="container-center text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-[#1e293b] dark:text-white sm:text-5xl lg:text-6xl">
             Your Complete{' '}
-            <span className="text-accent">Healthcare</span>{' '}
+            <span className="text-primary">Healthcare</span>{' '}
             Platform
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-[#334155] dark:text-gray-400">
             Connect with doctors, physiotherapists, pharmacists, and nutritionists
             in a single virtual workspace. Built for South Asian healthcare markets.
           </p>
@@ -79,20 +79,20 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="bg-gray-50 dark:bg-slate-900/50 py-20">
+      <section className="bg-[#F0F5FA] dark:bg-slate-900/50 py-20">
         <div className="container-center">
-          <h2 className="text-center text-3xl font-bold text-slate-900 dark:text-white">Everything You Need</h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-gray-500">
+          <h2 className="text-center text-3xl font-bold text-[#1e293b] dark:text-white">Everything You Need</h2>
+          <p className="mx-auto mt-4 max-w-xl text-center text-[#334155] dark:text-gray-400">
             A complete platform for healthcare practitioners and patients
           </p>
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <div key={f.title} className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent-50 dark:bg-accent-950/50 mb-4">
-                  <f.icon className="h-6 w-6 text-accent" />
+              <div key={f.title} className="rounded-xl border border-[#D1D5DB] dark:border-gray-700 bg-white dark:bg-slate-900 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-900/30 mb-4">
+                  <f.icon className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-500">{f.desc}</p>
+                <h3 className="font-semibold text-[#1e293b] dark:text-white mb-2">{f.title}</h3>
+                <p className="text-sm text-[#334155] dark:text-gray-400">{f.desc}</p>
               </div>
             ))}
           </div>

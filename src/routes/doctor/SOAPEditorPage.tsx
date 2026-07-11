@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Search, AlertTriangle, Shield, Lock, User, ClipboardList, Stethoscope } from 'lucide-react'
+import { Search, AlertTriangle, Shield, Lock, User, ClipboardList, Stethoscope, FlaskConical, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import { CheckoutPaymentFlow } from '@/components/payments/CheckoutFlow'
+import { diagnosticsController, TEST_PANELS, LAB_NAMES } from '@/lib/integrations'
+import type { LabPartner } from '@/lib/integrations'
 
 interface ICD10Code {
   code: string
@@ -41,6 +43,10 @@ export default function SOAPEditorPage() {
   const [consentSigned, setConsentSigned] = useState(false)
   const [locked, setLocked] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [selectedLab, setSelectedLab] = useState<LabPartner>('chughtai')
+  const [selectedTests, setSelectedTests] = useState<string[]>([])
+  const [labOrderRef, setLabOrderRef] = useState<string | null>(null)
+  const [dispatchingLab, setDispatchingLab] = useState(false)
 
   const filteredICD = mockICD10.filter(c =>
     c.code.includes(icdSearch) || c.description.toLowerCase().includes(icdSearch.toLowerCase())
@@ -72,6 +78,35 @@ export default function SOAPEditorPage() {
   const handleLock = () => {
     setLocked(true)
     toast.success('SOAP note locked and signed')
+  }
+
+  const handleSendLabOrder = async () => {
+    if (selectedTests.length === 0) { toast.error('Select at least one test'); return }
+    setDispatchingLab(true)
+    const tests = TEST_PANELS[selectedLab].filter(t => selectedTests.includes(t.code))
+    const response = await diagnosticsController.placeOrder(selectedLab, {
+      id: `LAB-${Date.now()}`,
+      labPartner: selectedLab,
+      patientId: 'patient-001', patientName: 'Ahmed Raza',
+      patientPhone: '0300-1234567', patientAge: 35, patientGender: 'Male',
+      doctorId: 'doctor-001', doctorName: 'Dr. Sarah Ahmed',
+      tests: tests.map(t => ({ code: t.code, name: t.name })),
+      priority: 'routine', collectionType: 'home',
+      collectionAddress: 'House 12, Street 5, Gulshan-e-Maymar, Karachi',
+      collectionDate: new Date().toISOString().split('T')[0],
+      collectionTime: '09:00',
+    })
+    setDispatchingLab(false)
+    if (response.success) {
+      setLabOrderRef(response.labReference)
+      toast.success(response.message)
+    } else {
+      toast.error(response.message)
+    }
+  }
+
+  const toggleTest = (code: string) => {
+    setSelectedTests(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code])
   }
 
   return (
@@ -307,6 +342,45 @@ export default function SOAPEditorPage() {
                 <span className="text-gray-500">Jul 06</span>
                 <span>135/90 · 73kg · 115 mg/dL</span>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Lab Ordering */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FlaskConical className="h-4 w-4 text-accent" />
+                Lab Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-1">
+                {(['chughtai', 'zeenat'] as LabPartner[]).map(lab => (
+                  <Button key={lab} size="sm" variant={selectedLab === lab ? 'accent' : 'outline'}
+                    onClick={() => { setSelectedLab(lab); setSelectedTests([]); setLabOrderRef(null) }}>
+                    {LAB_NAMES[lab]}
+                  </Button>
+                ))}
+              </div>
+              <div className="space-y-1 max-h-40 overflow-auto">
+                {TEST_PANELS[selectedLab].map(test => (
+                  <label key={test.code} className="flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-primary-50 cursor-pointer">
+                    <input type="checkbox" checked={selectedTests.includes(test.code)}
+                      onChange={() => toggleTest(test.code)} className="accent-accent-600" />
+                    <span className="flex-1">{test.name}</span>
+                    <span className="text-primary-400">Rs.{test.price}</span>
+                  </label>
+                ))}
+              </div>
+              {labOrderRef && (
+                <div className="rounded bg-accent-50 p-2 text-xs text-accent-700">
+                  Order placed: {labOrderRef}
+                </div>
+              )}
+              <Button size="sm" className="w-full" variant="accent"
+                onClick={handleSendLabOrder} disabled={dispatchingLab || selectedTests.length === 0}>
+                {dispatchingLab ? 'Sending...' : <><Truck className="h-3.5 w-3.5 mr-1" /> Send to Lab</>}
+              </Button>
             </CardContent>
           </Card>
 
