@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,7 +35,7 @@ export default function SignInPage() {
             <Input
               id="email"
               type="email"
-              placeholder="doctor@healthcarehub.com"
+              placeholder="doctor@healthcarehustlers.org"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

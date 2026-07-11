@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Stethoscope, Search, Shield, Activity, Apple, Pill, ArrowRight } from 'lucide-react'
+import logoLight from '@/assets/logo.png'
+import logoDark from '@/assets/logo-white.png'
 
 const features = [
   { icon: Stethoscope, title: 'Multi-Specialty Telemedicine', desc: 'Connect with doctors, physiotherapists, pharmacists & nutritionists' },
@@ -20,16 +23,24 @@ const roles = [
 ]
 
 export default function LandingPage() {
+  const [darkMode, setDarkMode] = React.useState(false)
+  React.useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark')
+    setDarkMode(isDark)
+  }, [])
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
       <header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900">
         <div className="container-center flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-              <Stethoscope className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">HealthCare Hub</span>
+            <img
+              src={darkMode ? logoDark : logoLight}
+              alt="Healthcare Hustlers"
+              className="h-8 w-auto"
+            />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">Healthcare Hustlers</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/auth/sign-in">
@@ -47,7 +58,7 @@ export default function LandingPage() {
         <div className="container-center text-center">
           <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
             Your Complete{' '}
-            <span className="text-accent">Telehealth</span>{' '}
+            <span className="text-accent">Healthcare</span>{' '}
             Platform
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">

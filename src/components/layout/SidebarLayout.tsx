@@ -17,6 +17,8 @@ import {
   Stethoscope,
   ChevronDown,
 } from 'lucide-react'
+import logoLight from '@/assets/logo.png'
+import logoDark from '@/assets/logo-white.png'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useState, useEffect } from 'react'
@@ -74,10 +76,12 @@ export function SidebarLayout() {
         )}
       >
         <div className="flex h-16 items-center gap-2 border-b border-gray-200 dark:border-gray-700 px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-            <Stethoscope className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-lg font-bold text-slate-900 dark:text-white">HealthCare Hub</span>
+          <img
+            src={darkMode ? logoDark : logoLight}
+            alt="Healthcare Hustlers"
+            className="h-8 w-auto"
+          />
+          <span className="text-lg font-bold text-slate-900 dark:text-white">Healthcare Hustlers</span>
           <button
             className="ml-auto lg:hidden"
             onClick={() => setSidebarOpen(false)}
