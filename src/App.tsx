@@ -5,6 +5,7 @@ import SignInPage from '@/routes/auth/SignInPage'
 import SignUpPage from '@/routes/auth/SignUpPage'
 import PatientDashboard from '@/routes/patient/PatientDashboard'
 import PatientSearch from '@/routes/patient/PatientSearch'
+import BookAppointmentPage from '@/routes/patient/BookAppointment'
 import VitalsLogger from '@/routes/patient/VitalsLogger'
 import DoctorDashboard from '@/routes/doctor/DoctorDashboard'
 import SOAPEditorPage from '@/routes/doctor/SOAPEditorPage'
@@ -27,6 +28,8 @@ export default function App() {
       <Route element={<SidebarLayout />}>
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/patient/search" element={<PatientSearch />} />
+        <Route path="/patient/book" element={<BookAppointmentPage />} />
+        <Route path="/patient/book/:doctorId" element={<BookAppointmentPage />} />
         <Route path="/patient/vitals" element={<VitalsLogger />} />
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
         <Route path="/doctor/appointments/:id" element={<SOAPEditorPage />} />

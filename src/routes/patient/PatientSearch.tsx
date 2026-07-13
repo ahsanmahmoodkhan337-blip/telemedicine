@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { EmptyState, LoadingSkeleton } from '@/components/ui/loading-states'
 import { Search, MapPin, Star, DollarSign, Languages, Stethoscope } from 'lucide-react'
+import { BookAppointmentButton } from './BookAppointment'
 
 const mockProviders = [
   { id: '1', name: 'Dr. Sarah Ahmed', specialty: 'Cardiologist', city: 'Karachi', fee: 1500, rating: 4.8, language: ['English', 'Urdu'], verified: true },
@@ -132,7 +133,7 @@ export default function PatientSearch() {
                         {provider.language.join(', ')}
                       </p>
                     </div>
-                    <Button className="mt-3 w-full" size="sm">Book Appointment</Button>
+                    <BookAppointmentButton doctorId={provider.id} onBook={() => {}} />
                   </div>
                 </div>
               </CardContent>

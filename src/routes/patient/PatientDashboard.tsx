@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { LoadingSkeleton } from '@/components/ui/loading-states'
 import { CalendarDays, Clock, Video, User, Activity, Heart, Weight, Thermometer, Droplets } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { getAppointments, AppointmentCard } from './BookAppointment'
 
 const mockVitals = {
   bloodPressure: [
@@ -108,27 +109,31 @@ export default function PatientDashboard() {
             <CardTitle className="text-base">Upcoming Appointments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {mockAppointments.map((apt) => (
-              <div key={apt.id} className="flex items-start gap-3 rounded-lg border border-gray-100 dark:border-gray-700 p-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-accent-100 text-accent text-xs">
-                    {apt.doctor.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{apt.doctor}</p>
-                  <p className="text-xs text-gray-500">{apt.specialty}</p>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                    <CalendarDays className="h-3 w-3" />
-                    <span>{apt.date}</span>
-                    <Clock className="h-3 w-3 ml-1" />
-                    <span>{apt.time}</span>
+            {[...mockAppointments, ...getAppointments()].slice(0, 5).map((apt) => (
+              'doctorName' in apt ? (
+                <AppointmentCard key={apt.id} apt={apt} />
+              ) : (
+                <div key={apt.id} className="flex items-start gap-3 rounded-lg border border-gray-100 dark:border-gray-700 p-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-accent-100 text-accent text-xs">
+                      {apt.doctor.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{apt.doctor}</p>
+                    <p className="text-xs text-gray-500">{apt.specialty}</p>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                      <CalendarDays className="h-3 w-3" />
+                      <span>{apt.date}</span>
+                      <Clock className="h-3 w-3 ml-1" />
+                      <span>{apt.time}</span>
+                    </div>
                   </div>
+                  <Badge variant={apt.status === 'completed' ? 'success' : 'default'}>
+                    {apt.status}
+                  </Badge>
                 </div>
-                <Badge variant={apt.status === 'completed' ? 'success' : 'default'}>
-                  {apt.status}
-                </Badge>
-              </div>
+              )
             ))}
           </CardContent>
         </Card>
