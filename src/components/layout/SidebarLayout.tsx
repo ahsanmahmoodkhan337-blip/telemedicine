@@ -16,10 +16,12 @@ import {
   X,
   Stethoscope,
   ChevronDown,
+  Bell,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useState, useEffect } from 'react'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 const navItems = [
   { path: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['patient'] },
@@ -131,8 +133,11 @@ export function SidebarLayout() {
 
           <div className="flex-1" />
 
-          <div className="flex items-center gap-3">
-            <div className="text-right text-sm">
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+
+            <div className="flex items-center gap-3 ml-2">
+              <div className="text-right text-sm">
               <p className="font-medium text-slate-900 dark:text-white">{MOCK_USER.name}</p>
               <p className="text-gray-500 capitalize">{MOCK_USER.role}</p>
             </div>
@@ -146,6 +151,7 @@ export function SidebarLayout() {
             >
               <LogOut className="h-5 w-5" />
             </Button>
+            </div>
           </div>
         </header>
 
