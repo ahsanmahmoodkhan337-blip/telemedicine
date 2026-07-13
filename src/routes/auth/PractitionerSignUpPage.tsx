@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 import {
   User,
   GraduationCap,
@@ -20,6 +21,12 @@ import {
   Eye,
   EyeOff,
   MapPin,
+  Upload,
+  X,
+  Building2,
+  Wallet,
+  Smartphone,
+  Loader2,
 } from 'lucide-react'
 
 /* ─── Types ─── */
@@ -75,6 +82,28 @@ export interface PractitionerFormData {
   onlineSlotDuration: string
   clinics: Clinic[]
   schedules: TimeBlock[]
+}
+
+type PayoutMethod = 'bank' | 'easypaisa' | 'jazzcash'
+
+interface PayoutData {
+  method: PayoutMethod | ''
+  bankName: string
+  accountTitle: string
+  ibanNumber: string
+  walletHolder: string
+  walletPhone: string
+}
+
+interface DocUpload {
+  type: string
+  label: string
+  file: File | null
+  uploaded: boolean
+  uploading: boolean
+  progress: number
+  url: string
+  error: string
 }
 
 const STORAGE_KEY = 'practitioner_registration_data'
@@ -157,6 +186,13 @@ const TIME_OPTIONS = timeOpts()
 function emptyClinic(): Clinic {
   return { id: crypto.randomUUID(), name: '', city: '', address: '', floor: '', fee: '', slotDuration: '15' }
 }
+
+const DOCUMENT_TYPES: { type: string; label: string; accept: string }[] = [
+  { type: 'degree_certificate', label: 'Degree Certificate', accept: '.pdf,.png,.jpg,.jpeg' },
+  { type: 'license_card_front', label: 'License Card (Front)', accept: '.png,.jpg,.jpeg' },
+  { type: 'license_card_back', label: 'License Card (Back)', accept: '.png,.jpg,.jpeg' },
+  { type: 'cnic', label: 'CNIC (Front + Back)', accept: '.png,.jpg,.jpeg,.pdf' },
+]
 
 /* ─── Validation ─── */
 
@@ -497,6 +533,290 @@ function Step4Schedule({ data, update }: { data: PractitionerFormData; update: (
   )
 }
 
+/* ─── Step 5: Documents & Payout ─── */
+
+function Step5Documents({
+  docs,
+  setDocs,
+  payout,
+  setPayout,
+  submitting,
+  setSubmitting,
+}: {
+  docs: DocUpload[]
+  setDocs: React.Dispatch<React.SetStateAction<DocUpload[]>>
+  payout: PayoutData
+  setPayout: React.Dispatch<React.SetStateAction<PayoutData>>
+  submitting: boolean
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>
+}) {
+  const hiddenInputRef = useRef<HTMLInputElement>(null)
+  const [currentDocType, setCurrentDocType] = useState<string>('')
+
+  const handleFileSelect = (docType: string, file: File) => {
+    setDocs((prev) =>
+      prev.map((d) =>
+        d.type === docType ? { ...d, file, uploaded: false, uploading: false, progress: 0, url: '', error: '' } : d,
+      ),
+    )
+  }
+
+  const triggerUpload = (docType: string) => {
+    setCurrentDocType(docType)
+    hiddenInputRef.current?.click()
+  }
+
+  const removeFile = (docType: string) => {
+    setDocs((prev) =>
+      prev.map((d) =>
+        d.type === docType ? { ...d, file: null, uploaded: false, uploading: false, progress: 0, url: '', error: '' } : d,
+      ),
+    )
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Hidden file input */}
+      <input
+        ref={hiddenInputRef}
+        type="file"
+        className="hidden"
+        accept=".pdf,.png,.jpg,.jpeg"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file && currentDocType) handleFileSelect(currentDocType, file)
+          e.target.value = ''
+        }}
+      />
+
+      {/* Document Upload Section */}
+      <div>
+        <h4 className="text-sm font-medium text-[#1e293b] dark:text-white mb-3 flex items-center gap-2">
+          <Upload className="h-4 w-4 text-primary" />
+          Required Documents
+        </h4>
+        <p className="text-xs text-gray-500 mb-4">Upload the following documents for verification. Accepted: PDF, PNG, JPEG (max 50MB each)</p>
+
+        <div className="space-y-3">
+          {docs.map((doc) => (
+            <div
+              key={doc.type}
+              className={`rounded-lg border-2 border-dashed p-4 transition-colors ${
+                doc.file
+                  ? 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10'
+                  : 'border-[#D1D5DB] hover:border-primary/50 dark:border-gray-600'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    doc.file ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-gray-100 dark:bg-gray-800'
+                  }`}>
+                    {doc.file ? (
+                      <Check className="h-5 w-5 text-emerald-600" />
+                    ) : (
+                      <FileText className="h-5 w-5 text-gray-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#1e293b] dark:text-white">{doc.label}</p>
+                    {doc.file && (
+                      <p className="text-xs text-gray-500">{doc.file.name} ({formatFileSize(doc.file.size)})</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!doc.file ? (
+                    <Button type="button" variant="outline" size="sm" onClick={() => triggerUpload(doc.type)} className="gap-1.5 text-xs h-8">
+                      <Upload className="h-3.5 w-3.5" /> Upload
+                    </Button>
+                  ) : (
+                    <>
+                      {doc.uploaded ? (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 gap-1">
+                          <Check className="h-3 w-3" /> Uploaded
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-gray-400">Pending upload</span>
+                      )}
+                      <button type="button" onClick={() => removeFile(doc.type)} className="text-gray-400 hover:text-red-500">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {doc.uploading && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                    <span>Uploading...</span>
+                    <span>{doc.progress}%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-300"
+                      style={{ width: `${doc.progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {doc.error && (
+                <p className="mt-2 text-xs text-red-500">{doc.error}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-[#D1D5DB] dark:border-gray-700" />
+
+      {/* Payout Section */}
+      <div>
+        <h4 className="text-sm font-medium text-[#1e293b] dark:text-white mb-3 flex items-center gap-2">
+          <Wallet className="h-4 w-4 text-primary" />
+          Payout Details
+        </h4>
+        <p className="text-xs text-gray-500 mb-4">Choose how you'd like to receive your consultation payments.</p>
+
+        {/* Payout Method Selector */}
+        <div className="grid gap-3 sm:grid-cols-3 mb-4">
+          {([
+            { value: 'bank', label: 'Bank Account', icon: Building2 },
+            { value: 'easypaisa', label: 'Easypaisa', icon: Smartphone },
+            { value: 'jazzcash', label: 'JazzCash', icon: Smartphone },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPayout((p) => ({ ...p, method: opt.value }))}
+              className={`flex items-center justify-center gap-2 rounded-lg border-2 px-3 py-3 text-sm font-medium transition-colors ${
+                payout.method === opt.value
+                  ? 'border-primary bg-primary-50 text-primary dark:bg-primary-900/20'
+                  : 'border-[#D1D5DB] text-[#334155] hover:border-primary/50 dark:border-gray-600 dark:text-slate-300'
+              }`}
+            >
+              <opt.icon className="h-4 w-4" />
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Bank Account Fields */}
+        {payout.method === 'bank' && (
+          <div className="rounded-lg border border-[#D1D5DB] p-4 space-y-4 dark:border-gray-600">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="bankName">Bank Name</Label>
+                <Input
+                  id="bankName"
+                  placeholder="e.g. HBL, UBL, Meezan"
+                  value={payout.bankName}
+                  onChange={(e) => setPayout((p) => ({ ...p, bankName: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="accountTitle">Account Title</Label>
+                <Input
+                  id="accountTitle"
+                  placeholder="Name on bank account"
+                  value={payout.accountTitle}
+                  onChange={(e) => setPayout((p) => ({ ...p, accountTitle: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="iban">IBAN Number</Label>
+              <Input
+                id="iban"
+                placeholder="PK24SCBN0000000000000000 (24+ characters)"
+                value={payout.ibanNumber}
+                onChange={(e) => setPayout((p) => ({ ...p, ibanNumber: e.target.value }))}
+              />
+              {payout.ibanNumber && payout.ibanNumber.length < 24 && (
+                <p className="text-xs text-amber-500">IBAN must be at least 24 characters</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Easypaisa Fields */}
+        {payout.method === 'easypaisa' && (
+          <div className="rounded-lg border border-[#D1D5DB] p-4 space-y-4 dark:border-gray-600">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="easypaisaHolder">Wallet Holder Name</Label>
+                <Input
+                  id="easypaisaHolder"
+                  placeholder="Full name"
+                  value={payout.walletHolder}
+                  onChange={(e) => setPayout((p) => ({ ...p, walletHolder: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="easypaisaPhone">Wallet Phone Number</Label>
+                <Input
+                  id="easypaisaPhone"
+                  placeholder="+92 3XX XXXXXXX"
+                  value={payout.walletPhone}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 11)
+                    setPayout((p) => ({ ...p, walletPhone: digits }))
+                  }}
+                />
+                {payout.walletPhone && payout.walletPhone.length !== 11 && (
+                  <p className="text-xs text-amber-500">Must be 11 digits (e.g. 03123456789)</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* JazzCash Fields */}
+        {payout.method === 'jazzcash' && (
+          <div className="rounded-lg border border-[#D1D5DB] p-4 space-y-4 dark:border-gray-600">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="jazzcashHolder">Wallet Holder Name</Label>
+                <Input
+                  id="jazzcashHolder"
+                  placeholder="Full name"
+                  value={payout.walletHolder}
+                  onChange={(e) => setPayout((p) => ({ ...p, walletHolder: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="jazzcashPhone">Wallet Phone Number</Label>
+                <Input
+                  id="jazzcashPhone"
+                  placeholder="+92 3XX XXXXXXX"
+                  value={payout.walletPhone}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 11)
+                    setPayout((p) => ({ ...p, walletPhone: digits }))
+                  }}
+                />
+                {payout.walletPhone && payout.walletPhone.length !== 11 && (
+                  <p className="text-xs text-amber-500">Must be 11 digits (e.g. 03123456789)</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Main Page ─── */
 
 export default function PractitionerSignUpPage() {
@@ -508,8 +828,15 @@ export default function PractitionerSignUpPage() {
     onlineConsult: false, onlineFee: '', onlineDiscountedFee: '', onlineDiscountedToggle: false, onlineSlotDuration: '15',
     clinics: [], schedules: [],
   })
+  const [docs, setDocs] = useState<DocUpload[]>(
+    DOCUMENT_TYPES.map((dt) => ({ type: dt.type, label: dt.label, file: null, uploaded: false, uploading: false, progress: 0, url: '', error: '' })),
+  )
+  const [payout, setPayout] = useState<PayoutData>({
+    method: '', bankName: '', accountTitle: '', ibanNumber: '', walletHolder: '', walletPhone: '',
+  })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     try {
@@ -530,11 +857,171 @@ export default function PractitionerSignUpPage() {
 
   const handleBack = () => { setErrors({}); setStep((s) => Math.max(s - 1, 0)) }
 
-  const handleSubmit = () => {
+  const uploadDoc = async (doc: DocUpload, userId: string): Promise<boolean> => {
+    if (!doc.file) return false
+    setDocs((prev) => prev.map((d) => (d.type === doc.type ? { ...d, uploading: true, progress: 0, error: '' } : d)))
+
+    const filePath = `${userId}/${doc.type}/${doc.file.name}`
+    const { error } = await supabase.storage
+      .from('practitioner-documents')
+      .upload(filePath, doc.file, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (error) {
+      setDocs((prev) =>
+        prev.map((d) => (d.type === doc.type ? { ...d, uploading: false, error: error.message } : d)),
+      )
+      return false
+    }
+
+    const { data: urlData } = supabase.storage.from('practitioner-documents').getPublicUrl(filePath)
+
+    setDocs((prev) =>
+      prev.map((d) =>
+        d.type === doc.type ? { ...d, uploading: false, uploaded: true, progress: 100, url: urlData?.publicUrl || '' } : d,
+      ),
+    )
+    return true
+  }
+
+  const handleSubmit = async () => {
+    setSubmitting(true)
     setLoading(true)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    toast.success('Registration data saved!')
-    setTimeout(() => { setLoading(false); navigate('/auth/sign-in') }, 600)
+
+    try {
+      // 1. Create Supabase auth user
+      const clinicalRole = data.role || ''
+      const licBody = data.licensingBody === 'PMDC' ? 'PMDC' : data.licensingBody === 'PCP' ? 'PCP' : data.licensingBody === 'PNDS' ? 'PNDS' : data.licensingBody === 'NCAH' ? 'NCAH' : 'OTHER'
+
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName,
+            role: clinicalRole === 'General Physician' || clinicalRole === 'Specialist Doctor' ? 'doctor' :
+                  clinicalRole === 'Dentist' ? 'doctor' :
+                  clinicalRole === 'Physiotherapist' ? 'physiotherapist' :
+                  clinicalRole === 'Nutritionist' ? 'nutritionist' : 'doctor',
+            phone: data.phone,
+            cnic: data.cnic,
+            gender: data.gender,
+            clinical_role: clinicalRole,
+            lic_body: licBody,
+            lic_number: data.licenseNumber,
+            highest_degree: data.highestDegree,
+            experience_years: data.experience || null,
+            city: data.clinics[0]?.city || '',
+            license_number: data.licenseNumber,
+            licensing_body: data.licensingBody,
+            consultation_fee: data.onlineFee || data.clinics[0]?.fee || '0',
+          },
+        },
+      })
+
+      if (signUpError) {
+        toast.error(signUpError.message)
+        setSubmitting(false)
+        setLoading(false)
+        return
+      }
+
+      const userId = authData.user?.id
+      if (!userId) {
+        toast.error('Failed to create user account. Please try again.')
+        setSubmitting(false)
+        setLoading(false)
+        return
+      }
+
+      // 2. Upload documents one by one
+      let allDocsUploaded = true
+      for (const doc of docs) {
+        if (doc.file) {
+          const ok = await uploadDoc(doc, userId)
+          if (!ok) allDocsUploaded = false
+        }
+      }
+
+      // 3. Insert practitioner locations (online + clinics)
+      if (data.onlineConsult) {
+        await supabase.from('practitioner_locations').insert({
+          practitioner_id: userId,
+          location_name: 'Online Video Consultation',
+          location_mode: 'online_video',
+          city: data.clinics[0]?.city || '',
+          consultation_fee: parseFloat(data.onlineFee) || 0,
+          discounted_fee: data.onlineDiscountedToggle ? (parseFloat(data.onlineDiscountedFee) || 0) : null,
+          slot_duration_minutes: parseInt(data.onlineSlotDuration) || 15,
+        })
+      }
+
+      for (const clinic of data.clinics) {
+        if (clinic.name) {
+          await supabase.from('practitioner_locations').insert({
+            practitioner_id: userId,
+            location_name: clinic.name,
+            location_mode: 'physical_clinic',
+            city: clinic.city,
+            address: [clinic.address, clinic.floor].filter(Boolean).join(', '),
+            consultation_fee: parseFloat(clinic.fee) || 0,
+            slot_duration_minutes: parseInt(clinic.slotDuration) || 15,
+          })
+        }
+      }
+
+      // 4. Insert schedules
+      if (data.schedules.length > 0) {
+        const scheduleRows = data.schedules.map((s) => {
+          const dayMap: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 }
+          return {
+            practitioner_id: userId,
+            location_id: s.locationId === 'online' ? undefined : s.locationId,
+            day_of_week: dayMap[s.day] ?? 0,
+            start_time: s.start,
+            end_time: s.end,
+            break_start: s.hasBreak ? s.breakStart : null,
+            break_end: s.hasBreak ? s.breakEnd : null,
+            max_patients_per_slot: 1,
+          }
+        })
+        // Insert schedules for valid rows
+        for (const row of scheduleRows) {
+          if (row.location_id) {
+            await supabase.from('practitioner_schedules').insert(row)
+          }
+        }
+      }
+
+      // 5. Insert payout details if provided
+      if (payout.method) {
+        const payoutData: Record<string, any> = { practitioner_id: userId }
+        if (payout.method === 'bank') {
+          payoutData.bank_name = payout.bankName
+          payoutData.account_title = payout.accountTitle
+          payoutData.iban_number = payout.ibanNumber
+        } else if (payout.method === 'easypaisa') {
+          payoutData.easy_paisa_wallet = payout.walletPhone
+        } else if (payout.method === 'jazzcash') {
+          payoutData.jazz_cash_wallet = payout.walletPhone
+        }
+        await supabase.from('practitioner_payout_details').insert(payoutData)
+      }
+
+      // 6. Save to localStorage and navigate to success
+      const fullData = { ...data, docs: docs.map((d) => ({ type: d.type, url: d.url })), payout }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fullData))
+
+      toast.success('Registration submitted successfully!')
+      navigate('/auth/practitioner-success')
+    } catch (err: any) {
+      toast.error(err?.message || 'An unexpected error occurred. Please try again.')
+    } finally {
+      setSubmitting(false)
+      setLoading(false)
+    }
   }
 
   const renderStep = () => {
@@ -544,11 +1031,14 @@ export default function PractitionerSignUpPage() {
       case 2: return <Step3Locations data={data} update={update} errors={errors} />
       case 3: return <Step4Schedule data={data} update={update} />
       case 4: return (
-        <div className="py-8 text-center text-gray-500">
-          <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <p className="font-medium text-[#1e293b] dark:text-white mb-2">Documents & Payout</p>
-          <p className="text-sm">This step is handled by the system. Click Submit to save your progress.</p>
-        </div>
+        <Step5Documents
+          docs={docs}
+          setDocs={setDocs}
+          payout={payout}
+          setPayout={setPayout}
+          submitting={submitting}
+          setSubmitting={setSubmitting}
+        />
       )
       default: return null
     }
@@ -603,7 +1093,7 @@ export default function PractitionerSignUpPage() {
               </Button>
             ) : (
               <Button type="button" onClick={handleSubmit} disabled={loading} className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
-                {loading ? 'Saving...' : <><Check className="h-4 w-4" /> Submit Registration</>}
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Submitting...</> : <><Check className="h-4 w-4" /> Submit Registration</>}
               </Button>
             )}
           </div>

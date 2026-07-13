@@ -3,6 +3,8 @@ import { SidebarLayout } from '@/components/layout/SidebarLayout'
 import AuthLayout from '@/routes/auth/AuthLayout'
 import SignInPage from '@/routes/auth/SignInPage'
 import SignUpPage from '@/routes/auth/SignUpPage'
+import PractitionerSignUpPage from '@/routes/auth/PractitionerSignUpPage'
+import PractitionerSuccessPage from '@/routes/auth/PractitionerSuccessPage'
 import PatientDashboard from '@/routes/patient/PatientDashboard'
 import PatientSearch from '@/routes/patient/PatientSearch'
 import VitalsLogger from '@/routes/patient/VitalsLogger'
@@ -23,6 +25,8 @@ export default function App() {
         <Route index element={<Navigate to="/auth/sign-in" replace />} />
         <Route path="sign-in" element={<SignInPage />} />
         <Route path="sign-up" element={<SignUpPage />} />
+        <Route path="practitioner-signup" element={<PractitionerSignUpPage />} />
+        <Route path="practitioner-success" element={<PractitionerSuccessPage />} />
       </Route>
       <Route element={<SidebarLayout />}>
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
