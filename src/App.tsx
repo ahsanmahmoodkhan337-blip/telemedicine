@@ -1,45 +1,153 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
-import AuthLayout from '@/routes/auth/AuthLayout'
-import SignInPage from '@/routes/auth/SignInPage'
-import SignUpPage from '@/routes/auth/SignUpPage'
-import PatientDashboard from '@/routes/patient/PatientDashboard'
-import PatientSearch from '@/routes/patient/PatientSearch'
-import VitalsLogger from '@/routes/patient/VitalsLogger'
-import MedicalRecords from '@/routes/patient/MedicalRecords'
-import DoctorDashboard from '@/routes/doctor/DoctorDashboard'
-import SOAPEditorPage from '@/routes/doctor/SOAPEditorPage'
-import PatientDetailPage from '@/routes/doctor/PatientDetailPage'
-import PharmacistInbox from '@/routes/pharmacist/PharmacistInbox'
-import PhysioDashboard from '@/routes/physio/PhysioDashboard'
-import NutritionistPatients from '@/routes/nutritionist/NutritionistPatients'
-import AdminVerification from '@/routes/admin/AdminVerification'
-import NotFoundPage from '@/routes/NotFoundPage'
-import LandingPage from '@/routes/LandingPage'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { LoadingSkeleton } from '@/components/ui/loading-states'
+
+const AuthLayout = lazy(() => import('@/routes/auth/AuthLayout'))
+const SignInPage = lazy(() => import('@/routes/auth/SignInPage'))
+const SignUpPage = lazy(() => import('@/routes/auth/SignUpPage'))
+const PatientDashboard = lazy(() => import('@/routes/patient/PatientDashboard'))
+const PatientSearch = lazy(() => import('@/routes/patient/PatientSearch'))
+const VitalsLogger = lazy(() => import('@/routes/patient/VitalsLogger'))
+const DoctorDashboard = lazy(() => import('@/routes/doctor/DoctorDashboard'))
+const SOAPEditorPage = lazy(() => import('@/routes/doctor/SOAPEditorPage'))
+const PharmacistInbox = lazy(() => import('@/routes/pharmacist/PharmacistInbox'))
+const PhysioDashboard = lazy(() => import('@/routes/physio/PhysioDashboard'))
+const NutritionistPatients = lazy(() => import('@/routes/nutritionist/NutritionistPatients'))
+const AdminVerification = lazy(() => import('@/routes/admin/AdminVerification'))
+const NotFoundPage = lazy(() => import('@/routes/NotFoundPage'))
+const LandingPage = lazy(() => import('@/routes/LandingPage'))
+
+function PageSuspense({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<LoadingSkeleton title="Loading page..." />}>
+      {children}
+    </Suspense>
+  )
+}
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/auth" element={<AuthLayout />}>
-        <Route index element={<Navigate to="/auth/sign-in" replace />} />
-        <Route path="sign-in" element={<SignInPage />} />
-        <Route path="sign-up" element={<SignUpPage />} />
-      </Route>
-      <Route element={<SidebarLayout />}>
-        <Route path="/patient/dashboard" element={<PatientDashboard />} />
-        <Route path="/patient/search" element={<PatientSearch />} />
-        <Route path="/patient/vitals" element={<VitalsLogger />} />
-        <Route path="/patient/records" element={<MedicalRecords />} />
-        <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-        <Route path="/doctor/appointments/:id" element={<SOAPEditorPage />} />
-        <Route path="/doctor/patients/:patientId" element={<PatientDetailPage />} />
-        <Route path="/pharmacist/inbox" element={<PharmacistInbox />} />
-        <Route path="/physio/dashboard" element={<PhysioDashboard />} />
-        <Route path="/nutritionist/patients/:id" element={<NutritionistPatients />} />
-        <Route path="/admin/verification" element={<AdminVerification />} />
-      </Route>
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PageSuspense>
+              <LandingPage />
+            </PageSuspense>
+          }
+        />
+        <Route
+          path="/auth"
+          element={
+            <PageSuspense>
+              <AuthLayout />
+            </PageSuspense>
+          }
+        >
+          <Route index element={<Navigate to="/auth/sign-in" replace />} />
+          <Route
+            path="sign-in"
+            element={
+              <PageSuspense>
+                <SignInPage />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="sign-up"
+            element={
+              <PageSuspense>
+                <SignUpPage />
+              </PageSuspense>
+            }
+          />
+        </Route>
+        <Route element={<SidebarLayout />}>
+          <Route
+            path="/patient/dashboard"
+            element={
+              <PageSuspense>
+                <PatientDashboard />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/patient/search"
+            element={
+              <PageSuspense>
+                <PatientSearch />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/patient/vitals"
+            element={
+              <PageSuspense>
+                <VitalsLogger />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/doctor/dashboard"
+            element={
+              <PageSuspense>
+                <DoctorDashboard />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/doctor/appointments/:id"
+            element={
+              <PageSuspense>
+                <SOAPEditorPage />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/pharmacist/inbox"
+            element={
+              <PageSuspense>
+                <PharmacistInbox />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/physio/dashboard"
+            element={
+              <PageSuspense>
+                <PhysioDashboard />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/nutritionist/patients/:id"
+            element={
+              <PageSuspense>
+                <NutritionistPatients />
+              </PageSuspense>
+            }
+          />
+          <Route
+            path="/admin/verification"
+            element={
+              <PageSuspense>
+                <AdminVerification />
+              </PageSuspense>
+            }
+          />
+        </Route>
+        <Route
+          path="*"
+          element={
+            <PageSuspense>
+              <NotFoundPage />
+            </PageSuspense>
+          }
+        />
+      </Routes>
+    </ErrorBoundary>
   )
 }

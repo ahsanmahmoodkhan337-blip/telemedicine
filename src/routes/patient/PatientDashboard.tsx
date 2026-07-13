@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { LoadingSkeleton } from '@/components/ui/loading-states'
+import { PageTransition } from '@/components/ui/page-transition'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { CalendarDays, Clock, Video, User, Activity, Heart, Weight, Thermometer, Droplets } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -67,11 +69,13 @@ export default function PatientDashboard() {
   if (loading) return <LoadingSkeleton title="Patient Dashboard" />
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Patient Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome back, Ahmed! Here's your health summary.</p>
-      </div>
+    <PageTransition>
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Dashboard' }]} />
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Patient Dashboard</h1>
+          <p className="text-gray-500 mt-1">Welcome back, Ahmed! Here's your health summary.</p>
+        </div>
 
       {/* Vitals Summary */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -144,5 +148,6 @@ export default function PatientDashboard() {
         </CardContent>
       </Card>
     </div>
+    </PageTransition>
   )
 }

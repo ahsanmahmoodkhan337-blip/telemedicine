@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { EmptyState, LoadingSkeleton } from '@/components/ui/loading-states'
+import { PageTransition } from '@/components/ui/page-transition'
+import { Breadcrumbs } from '@/components/ui/breadcrumbs'
 import { Search, MapPin, Star, DollarSign, Languages, Stethoscope } from 'lucide-react'
 
 const mockProviders = [
@@ -38,11 +40,13 @@ export default function PatientSearch() {
   if (loading) return <LoadingSkeleton title="Find a Doctor" />
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Find a Provider</h1>
-        <p className="text-gray-500 mt-1">Search for doctors, physiotherapists, nutritionists, and more</p>
-      </div>
+    <PageTransition>
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Find a Provider' }]} />
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Find a Provider</h1>
+          <p className="text-gray-500 mt-1">Search for doctors, physiotherapists, nutritionists, and more</p>
+        </div>
 
       {/* Filters */}
       <Card>
