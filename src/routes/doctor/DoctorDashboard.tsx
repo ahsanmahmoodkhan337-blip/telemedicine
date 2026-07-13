@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { LoadingSkeleton, EmptyState } from '@/components/ui/loading-states'
-import { CalendarDays, Clock, Video, Search, User, Stethoscope } from 'lucide-react'
+import { CalendarDays, Clock, Video, Search, User, Stethoscope, FileText, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 interface Patient {
@@ -127,7 +127,11 @@ export default function DoctorDashboard() {
               <EmptyState title="No patients found" description="" />
             ) : (
               filteredPatients.map((patient) => (
-                <div key={patient.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
+                <div
+                  key={patient.id}
+                  onClick={() => navigate(`/doctor/patients/${patient.id}`)}
+                  className="flex items-center gap-3 rounded-lg p-2 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                >
                   <Avatar className="h-9 w-9">
                     <AvatarFallback className="bg-secondary text-white text-xs">
                       {patient.name.split(' ').map(n => n[0]).join('')}
