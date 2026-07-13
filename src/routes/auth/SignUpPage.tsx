@@ -90,6 +90,14 @@ export default function SignUpPage() {
             Sign in
           </Link>
         </p>
+        <div className="mt-4 border-t border-[#D1D5DB] pt-4 text-center dark:border-gray-700">
+          <p className="text-sm text-gray-500 mb-2">Are you a healthcare professional?</p>
+          <Link to="/auth/practitioner-signup">
+            <Button variant="outline" size="sm" className="gap-1.5 w-full">
+              Register as Practitioner
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )
