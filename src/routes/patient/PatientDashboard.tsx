@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { LoadingSkeleton } from '@/components/ui/loading-states'
-import { CalendarDays, Clock, Video, User, Activity, Heart, Weight, Thermometer, Droplets } from 'lucide-react'
+import { CalendarDays, Clock, Video, User, Activity, Heart, Weight, Thermometer } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { getAppointments, AppointmentCard } from './BookAppointment'
+import { getAppointments, AppointmentCard } from '@/components/booking/BookAppointmentDialog'
+import PrescriptionHistory from '@/components/prescriptions/PrescriptionHistory'
 
 const mockVitals = {
   bloodPressure: [
@@ -38,10 +38,10 @@ const mockAppointments = [
 ]
 
 const vitalsSummary = [
-  { icon: Heart, label: 'BP', value: '121/81', status: 'stable' as const, color: 'clinical-stable' },
-  { icon: Activity, label: 'Glucose', value: '98 mg/dL', status: 'stable' as const, color: 'clinical-stable' },
-  { icon: Weight, label: 'Weight', value: '72 kg', status: 'stable' as const, color: 'clinical-stable' },
-  { icon: Thermometer, label: 'Temp', value: '36.8°C', status: 'stable' as const, color: 'clinical-stable' },
+  { icon: Heart, label: 'BP', value: '121/81', status: 'stable' as const, color: 'text-emerald-600' },
+  { icon: Activity, label: 'Glucose', value: '98 mg/dL', status: 'stable' as const, color: 'text-emerald-600' },
+  { icon: Weight, label: 'Weight', value: '72 kg', status: 'stable' as const, color: 'text-emerald-600' },
+  { icon: Thermometer, label: 'Temp', value: '36.8°C', status: 'stable' as const, color: 'text-emerald-600' },
 ]
 
 function VitalsChart({ data, dataKey, color, unit }: { data: any[]; dataKey: string; color: string; unit?: string }) {
@@ -79,7 +79,7 @@ export default function PatientDashboard() {
         {vitalsSummary.map((v) => (
           <Card key={v.label}>
             <CardContent className="flex items-center gap-4 p-4">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${v.color} bg-opacity-10`}>
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                 <v.icon className={`h-6 w-6 ${v.color}`} />
               </div>
               <div>
@@ -91,63 +91,77 @@ export default function PatientDashboard() {
         ))}
       </div>
 
-      {/* Charts + Appointments */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* BP Chart */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Blood Pressure (7 Days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <VitalsChart data={mockVitals.bloodPressure} dataKey="sys" color="#059669" />
-          </CardContent>
-        </Card>
+      {/* Tabs: Health Data / Prescriptions */}
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Health Overview</TabsTrigger>
+          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+        </TabsList>
 
-        {/* Upcoming Appointments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Upcoming Appointments</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[...mockAppointments, ...getAppointments()].slice(0, 5).map((apt) => (
-              'doctorName' in apt ? (
-                <AppointmentCard key={apt.id} apt={apt} />
-              ) : (
-                <div key={apt.id} className="flex items-start gap-3 rounded-lg border border-gray-100 dark:border-gray-700 p-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-accent-100 text-accent text-xs">
-                      {apt.doctor.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{apt.doctor}</p>
-                    <p className="text-xs text-gray-500">{apt.specialty}</p>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                      <CalendarDays className="h-3 w-3" />
-                      <span>{apt.date}</span>
-                      <Clock className="h-3 w-3 ml-1" />
-                      <span>{apt.time}</span>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Charts + Appointments */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* BP Chart */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base">Blood Pressure (7 Days)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <VitalsChart data={mockVitals.bloodPressure} dataKey="sys" color="#059669" />
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Appointments */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Upcoming Appointments</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...mockAppointments, ...getAppointments()].slice(0, 5).map((apt) => (
+                  'doctorName' in apt ? (
+                    <AppointmentCard key={apt.id} apt={apt} />
+                  ) : (
+                    <div key={apt.id} className="flex items-start gap-3 rounded-lg border border-gray-100 dark:border-gray-700 p-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-accent-100 text-accent text-xs">
+                          {apt.doctor.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{apt.doctor}</p>
+                        <p className="text-xs text-gray-500">{apt.specialty}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                          <CalendarDays className="h-3 w-3" />
+                          <span>{apt.date}</span>
+                          <Clock className="h-3 w-3 ml-1" />
+                          <span>{apt.time}</span>
+                        </div>
+                      </div>
+                      <Badge variant={apt.status === 'completed' ? 'success' : 'default'}>
+                        {apt.status}
+                      </Badge>
                     </div>
-                  </div>
-                  <Badge variant={apt.status === 'completed' ? 'success' : 'default'}>
-                    {apt.status}
-                  </Badge>
-                </div>
-              )
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+                  )
+                ))}
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Glucose Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Glucose Levels (7 Days)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <VitalsChart data={mockVitals.glucose} dataKey="value" color="#6366f1" />
-        </CardContent>
-      </Card>
+          {/* Glucose Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Glucose Levels (7 Days)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <VitalsChart data={mockVitals.glucose} dataKey="value" color="#6366f1" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="prescriptions">
+          <PrescriptionHistory />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

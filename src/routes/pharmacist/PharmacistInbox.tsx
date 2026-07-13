@@ -4,69 +4,26 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { LoadingSkeleton, EmptyState, ErrorState } from '@/components/ui/loading-states'
-import { Pill, AlertTriangle, CheckCircle, Clock, User, Stethoscope } from 'lucide-react'
+import { LoadingSkeleton, EmptyState } from '@/components/ui/loading-states'
+import { Pill, AlertTriangle, CheckCircle, Clock, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { CheckoutPaymentFlow } from '@/components/payments/CheckoutFlow'
-
-interface Prescription {
-  id: string
-  patient: string
-  doctor: string
-  medication: string
-  dosage: string
-  frequency: string
-  duration: string
-  date: string
-  status: 'pending' | 'dispensed' | 'cancelled'
-  interactions: string[]
-}
-
-const mockPrescriptions: Prescription[] = [
-  {
-    id: 'RX-001',
-    patient: 'Ahmed Raza',
-    doctor: 'Dr. Sarah Ahmed',
-    medication: 'Amlodipine 5mg',
-    dosage: '1 tablet',
-    frequency: 'Once daily',
-    duration: '30 days',
-    date: '2026-07-08',
-    status: 'pending',
-    interactions: ['Possible interaction with Metformin'],
-  },
-  {
-    id: 'RX-002',
-    patient: 'Sana Tariq',
-    doctor: 'Dr. Imran Ali',
-    medication: 'Metformin 500mg',
-    dosage: '1 tablet',
-    frequency: 'Twice daily',
-    duration: '60 days',
-    date: '2026-07-07',
-    status: 'pending',
-    interactions: [],
-  },
-  {
-    id: 'RX-003',
-    patient: 'Bilal Khan',
-    doctor: 'Dr. Fatima Khan',
-    medication: 'Ibuprofen 400mg',
-    dosage: '1 tablet',
-    frequency: 'As needed',
-    duration: '10 days',
-    date: '2026-07-06',
-    status: 'dispensed',
-    interactions: [],
-  },
-]
+import {
+  getPrescriptions,
+  updatePrescriptionStatus,
+  type Prescription,
+} from '@/lib/mockData'
 
 export default function PharmacistInbox() {
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(mockPrescriptions)
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>(getPrescriptions())
   const [selectedRx, setSelectedRx] = useState<Prescription | null>(null)
   const [showInteraction, setShowInteraction] = useState(false)
+  const [showDetail, setShowDetail] = useState(false)
   const [loading] = useState(false)
+
+  const refreshData = () => {
+    setPrescriptions(getPrescriptions())
+  }
 
   const handleDispense = (rx: Prescription) => {
     if (rx.interactions.length > 0) {
@@ -74,21 +31,28 @@ export default function PharmacistInbox() {
       setShowInteraction(true)
       return
     }
-    setPrescriptions(prev =>
-      prev.map(p => p.id === rx.id ? { ...p, status: 'dispensed' as const } : p)
-    )
-    toast.success(`Prescription ${rx.id} dispensed`)
+    const updated = updatePrescriptionStatus(rx.id, 'dispensed')
+    if (updated) {
+      refreshData()
+      toast.success(`Prescription ${rx.id} dispensed`)
+    }
   }
 
   const handleOverrideInteraction = () => {
     if (selectedRx) {
-      setPrescriptions(prev =>
-        prev.map(p => p.id === selectedRx.id ? { ...p, status: 'dispensed' as const } : p)
-      )
-      toast.success('Interaction overridden — prescription dispensed')
+      const updated = updatePrescriptionStatus(selectedRx.id, 'dispensed')
+      if (updated) {
+        refreshData()
+        toast.success('Interaction overridden — prescription dispensed')
+      }
       setShowInteraction(false)
       setSelectedRx(null)
     }
+  }
+
+  const viewDetails = (rx: Prescription) => {
+    setSelectedRx(rx)
+    setShowDetail(true)
   }
 
   if (loading) return <LoadingSkeleton title="Pharmacist Console" />
@@ -98,9 +62,14 @@ export default function PharmacistInbox() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pharmacist Console</h1>
-        <p className="text-gray-500 mt-1">Review and dispense e-prescriptions</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Pharmacist Console</h1>
+          <p className="text-gray-500 mt-1">Review and dispense e-prescriptions</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={refreshData} className="gap-1.5">
+          <Clock className="h-4 w-4" /> Refresh
+        </Button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -138,20 +107,22 @@ export default function PharmacistInbox() {
                   <TableHead>ID</TableHead>
                   <TableHead>Patient</TableHead>
                   <TableHead>Doctor</TableHead>
-                  <TableHead>Medication</TableHead>
+                  <TableHead>Medications</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Interactions</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {prescriptions.map((rx) => (
                   <TableRow key={rx.id}>
                     <TableCell className="font-medium">{rx.id}</TableCell>
-                    <TableCell>{rx.patient}</TableCell>
-                    <TableCell>{rx.doctor}</TableCell>
-                    <TableCell>{rx.medication} · {rx.dosage}</TableCell>
+                    <TableCell>{rx.patientName}</TableCell>
+                    <TableCell>{rx.doctorName}</TableCell>
+                    <TableCell>
+                      {rx.medications.length} item{rx.medications.length > 1 ? 's' : ''}
+                    </TableCell>
                     <TableCell>{rx.date}</TableCell>
                     <TableCell>
                       {rx.interactions.length > 0 ? (
@@ -166,16 +137,21 @@ export default function PharmacistInbox() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={rx.status === 'dispensed' ? 'success' : 'warning'}>
+                      <Badge variant={rx.status === 'dispensed' ? 'success' : rx.status === 'cancelled' ? 'destructive' : 'warning'}>
                         {rx.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {rx.status === 'pending' && (
-                        <Button size="sm" variant="outline" onClick={() => handleDispense(rx)}>
-                          Dispense
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => viewDetails(rx)} className="h-8 w-8 p-0">
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
+                        {rx.status === 'pending' && (
+                          <Button size="sm" variant="outline" onClick={() => handleDispense(rx)} className="text-xs h-8">
+                            Dispense
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -200,8 +176,9 @@ export default function PharmacistInbox() {
           {selectedRx && (
             <div className="space-y-4">
               <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4">
-                <p className="font-medium text-amber-800 dark:text-amber-400">{selectedRx.medication}</p>
-                <ul className="mt-2 space-y-1">
+                <p className="font-medium text-slate-900 dark:text-white mb-2">Patient: {selectedRx.patientName}</p>
+                <p className="font-medium text-amber-800 dark:text-amber-400 mb-2">Interactions found:</p>
+                <ul className="space-y-1">
                   {selectedRx.interactions.map((interaction, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-500">
                       <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -220,6 +197,51 @@ export default function PharmacistInbox() {
             <Button variant="destructive" onClick={handleOverrideInteraction}>
               Override & Dispense
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Prescription Detail Dialog */}
+      <Dialog open={showDetail} onOpenChange={setShowDetail}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-primary" />
+              Prescription Details
+            </DialogTitle>
+            <DialogDescription>
+              {selectedRx?.id} · {selectedRx?.patientName}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRx && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+                {selectedRx.medications.map((med, idx) => (
+                  <div key={idx} className="p-3">
+                    <p className="font-medium text-slate-900 dark:text-white text-sm">{med.name}</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
+                      <span>Dosage: {med.dosage}</span>
+                      <span>Frequency: {med.frequency}</span>
+                      <span>Route: {med.route}</span>
+                      <span>Duration: {med.duration}</span>
+                      <span>Quantity: {med.quantity}</span>
+                    </div>
+                    {med.instructions && (
+                      <p className="text-xs text-gray-500 mt-1 italic">Note: {med.instructions}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {selectedRx.notes && (
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{selectedRx.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDetail(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

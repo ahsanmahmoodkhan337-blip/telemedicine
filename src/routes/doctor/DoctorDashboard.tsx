@@ -5,17 +5,10 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { LoadingSkeleton, EmptyState } from '@/components/ui/loading-states'
-import { CalendarDays, Clock, Video, Search, User, Stethoscope } from 'lucide-react'
+import { CalendarDays, Clock, Video, Search, User, Stethoscope, Pill, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { getAppointments } from '@/routes/patient/BookAppointment'
-
-interface Patient {
-  id: string
-  name: string
-  age: number
-  lastVisit: string
-  condition: string
-}
+import { getAppointments } from '@/components/booking/BookAppointmentDialog'
+import { getPatients, getPendingPrescriptions } from '@/lib/mockData'
 
 interface Appointment {
   id: string
@@ -33,12 +26,7 @@ const mockAppointments: Appointment[] = [
   { id: '3', patientName: 'Bilal Khan', patientAge: 45, time: '2:00 PM', date: '2026-07-10', type: 'Consultation', status: 'scheduled' },
 ]
 
-const mockPatients: Patient[] = [
-  { id: '1', name: 'Ahmed Raza', age: 35, lastVisit: '2026-06-28', condition: 'Hypertension' },
-  { id: '2', name: 'Sana Tariq', age: 28, lastVisit: '2026-07-01', condition: 'Diabetes Type 2' },
-  { id: '3', name: 'Bilal Khan', age: 45, lastVisit: '2026-06-15', condition: 'Lower Back Pain' },
-  { id: '4', name: 'Zainab Ali', age: 52, lastVisit: '2026-07-05', condition: 'Arthritis' },
-]
+const mockPatients = getPatients()
 
 export default function DoctorDashboard() {
   const [search, setSearch] = useState('')
@@ -51,14 +39,16 @@ export default function DoctorDashboard() {
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  const pendingPrescriptions = getPendingPrescriptions().length
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Doctor Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome, Dr. Ahmed Khan</p>
+        <p className="text-gray-500 mt-1">Welcome, Dr. Sarah Ahmed</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-3xl font-bold text-accent">{mockAppointments.length + getAppointments().length}</p>
@@ -73,8 +63,15 @@ export default function DoctorDashboard() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-amber-600">3</p>
+            <p className="text-3xl font-bold text-amber-600">{pendingPrescriptions}</p>
             <p className="text-sm text-gray-500">Pending Prescriptions</p>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate('/doctor/prescriptions')}>
+          <CardContent className="p-4 text-center">
+            <Pill className="h-6 w-6 text-primary mx-auto mb-1" />
+            <p className="text-sm font-medium text-primary">Write Prescription</p>
+            <p className="text-xs text-gray-400">Create new e-prescription</p>
           </CardContent>
         </Card>
       </div>
@@ -146,7 +143,12 @@ export default function DoctorDashboard() {
                     <p className="text-sm font-medium text-slate-900 dark:text-white">{patient.name}</p>
                     <p className="text-xs text-gray-400">{patient.age} yrs · {patient.condition}</p>
                   </div>
-                  <span className="text-xs text-gray-400">Last: {patient.lastVisit}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-400">Last: {patient.lastVisit}</span>
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => navigate('/doctor/prescriptions')}>
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                    </Button>
+                  </div>
                 </div>
               ))
             )}

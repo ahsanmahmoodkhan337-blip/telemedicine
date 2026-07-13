@@ -9,6 +9,7 @@ import BookAppointmentPage from '@/routes/patient/BookAppointment'
 import VitalsLogger from '@/routes/patient/VitalsLogger'
 import DoctorDashboard from '@/routes/doctor/DoctorDashboard'
 import SOAPEditorPage from '@/routes/doctor/SOAPEditorPage'
+import PrescriptionGenerator from '@/routes/doctor/PrescriptionGenerator'
 import PharmacistInbox from '@/routes/pharmacist/PharmacistInbox'
 import PhysioDashboard from '@/routes/physio/PhysioDashboard'
 import NutritionistPatients from '@/routes/nutritionist/NutritionistPatients'
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/patient/vitals" element={<VitalsLogger />} />
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
         <Route path="/doctor/appointments/:id" element={<SOAPEditorPage />} />
+        <Route path="/doctor/prescriptions" element={<PrescriptionGenerator />} />
         <Route path="/pharmacist/inbox" element={<PharmacistInbox />} />
         <Route path="/physio/dashboard" element={<PhysioDashboard />} />
         <Route path="/nutritionist/patients/:id" element={<NutritionistPatients />} />
