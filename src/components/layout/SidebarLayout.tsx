@@ -16,6 +16,8 @@ import {
   X,
   Stethoscope,
   ChevronDown,
+  FileText,
+  User,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -25,6 +27,7 @@ const navItems = [
   { path: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['patient'] },
   { path: '/patient/search', label: 'Find Doctors', icon: Search, roles: ['patient'] },
   { path: '/patient/vitals', label: 'My Vitals', icon: Heart, roles: ['patient'] },
+  { path: '/patient/records', label: 'Medical Records', icon: FileText, roles: ['patient'] },
   { path: '/doctor/dashboard', label: 'My Patients', icon: Stethoscope, roles: ['doctor'] },
   { path: '/doctor/appointments/1', label: 'SOAP Editor', icon: ClipboardList, roles: ['doctor'] },
   { path: '/pharmacist/inbox', label: 'Prescriptions', icon: Pill, roles: ['pharmacist'] },

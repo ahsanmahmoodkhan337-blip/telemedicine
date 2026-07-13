@@ -6,8 +6,10 @@ import SignUpPage from '@/routes/auth/SignUpPage'
 import PatientDashboard from '@/routes/patient/PatientDashboard'
 import PatientSearch from '@/routes/patient/PatientSearch'
 import VitalsLogger from '@/routes/patient/VitalsLogger'
+import MedicalRecords from '@/routes/patient/MedicalRecords'
 import DoctorDashboard from '@/routes/doctor/DoctorDashboard'
 import SOAPEditorPage from '@/routes/doctor/SOAPEditorPage'
+import PatientDetailPage from '@/routes/doctor/PatientDetailPage'
 import PharmacistInbox from '@/routes/pharmacist/PharmacistInbox'
 import PhysioDashboard from '@/routes/physio/PhysioDashboard'
 import NutritionistPatients from '@/routes/nutritionist/NutritionistPatients'
@@ -28,8 +30,10 @@ export default function App() {
         <Route path="/patient/dashboard" element={<PatientDashboard />} />
         <Route path="/patient/search" element={<PatientSearch />} />
         <Route path="/patient/vitals" element={<VitalsLogger />} />
+        <Route path="/patient/records" element={<MedicalRecords />} />
         <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
         <Route path="/doctor/appointments/:id" element={<SOAPEditorPage />} />
+        <Route path="/doctor/patients/:patientId" element={<PatientDetailPage />} />
         <Route path="/pharmacist/inbox" element={<PharmacistInbox />} />
         <Route path="/physio/dashboard" element={<PhysioDashboard />} />
         <Route path="/nutritionist/patients/:id" element={<NutritionistPatients />} />
