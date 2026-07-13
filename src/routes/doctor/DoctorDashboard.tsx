@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { LoadingSkeleton, EmptyState } from '@/components/ui/loading-states'
 import { CalendarDays, Clock, Video, Search, User, Stethoscope } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { getAppointments } from '@/components/booking/BookAppointmentDialog'
 
 interface Patient {
   id: string
@@ -60,7 +61,7 @@ export default function DoctorDashboard() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-3xl font-bold text-accent">{mockAppointments.length}</p>
+            <p className="text-3xl font-bold text-accent">{mockAppointments.length + getAppointments().length}</p>
             <p className="text-sm text-gray-500">Today's Appointments</p>
           </CardContent>
         </Card>
@@ -85,7 +86,15 @@ export default function DoctorDashboard() {
             <CardTitle className="text-base">Today's Appointments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {mockAppointments.map((apt) => (
+            {[...mockAppointments, ...getAppointments().map(a => ({
+              id: a.id,
+              patientName: a.patientName || 'Patient',
+              patientAge: 35,
+              time: a.time,
+              date: a.date,
+              type: 'Booked',
+              status: 'scheduled' as const
+            }))].map((apt) => (
               <div key={apt.id} className="flex items-center gap-3 rounded-lg border border-gray-100 dark:border-gray-700 p-3">
                 <Avatar className="h-10 w-10">
                   <AvatarFallback className="bg-accent text-white">

@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { EmptyState, LoadingSkeleton } from '@/components/ui/loading-states'
-import { Search, MapPin, Star, DollarSign, Languages, Stethoscope } from 'lucide-react'
+import { Search, MapPin, Star, DollarSign, Languages, Stethoscope, CalendarDays } from 'lucide-react'
+import BookAppointmentDialog, { type ProviderInfo } from '@/components/booking/BookAppointmentDialog'
 
 const mockProviders = [
   { id: '1', name: 'Dr. Sarah Ahmed', specialty: 'Cardiologist', city: 'Karachi', fee: 1500, rating: 4.8, language: ['English', 'Urdu'], verified: true },
@@ -26,6 +27,7 @@ export default function PatientSearch() {
   const [city, setCity] = useState('All')
   const [maxFee, setMaxFee] = useState('')
   const [loading] = useState(false)
+  const [bookingProvider, setBookingProvider] = useState<ProviderInfo | null>(null)
 
   const filtered = mockProviders.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false
@@ -132,13 +134,23 @@ export default function PatientSearch() {
                         {provider.language.join(', ')}
                       </p>
                     </div>
-                    <Button className="mt-3 w-full" size="sm">Book Appointment</Button>
+                    <Button className="mt-3 w-full" size="sm" onClick={() => setBookingProvider(provider)}>
+                      <CalendarDays className="h-4 w-4 mr-1" /> Book Appointment
+                    </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {bookingProvider && (
+        <BookAppointmentDialog
+          provider={bookingProvider}
+          open={!!bookingProvider}
+          onClose={() => setBookingProvider(null)}
+        />
       )}
     </div>
   )
